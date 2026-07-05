@@ -1,7 +1,11 @@
 import { Router } from "express";
 import { db, PERIODS } from "../db.ts";
 import { scanVideos } from "../services/videoScanner.ts";
+import { advanceVideo } from "../services/playlistService.ts";
 import type { VideoRow } from "../services/playlistService.ts";
+import { getSettings } from "./settings.ts";
+import { getCurrentPeriod } from "../services/periodService.ts";
+import type { PeriodSettings } from "../services/periodService.ts";
 
 export const videosRouter = Router();
 
@@ -175,6 +179,13 @@ videosRouter.post("/import", (req, res) => {
   console.log(`[Videos] Import: ${imported} added, ${updated} updated, ${skipped.length} skipped`);
   const videos = (selectAll.all() as VideoRow[]).map(toVideoListItem);
   res.json({ imported, updated, skipped, videos });
+});
+
+videosRouter.post("/advance", (_req, res) => {
+  const settings = getSettings();
+  const period = getCurrentPeriod(new Date(), settings as unknown as PeriodSettings);
+  const { video, hasMultipleVideos } = advanceVideo(period);
+  res.json({ period, video, hasMultipleVideos });
 });
 
 videosRouter.post("/scan", (_req, res) => {

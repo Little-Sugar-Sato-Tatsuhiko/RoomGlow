@@ -37,15 +37,30 @@ export function toPublicVideo(video: VideoRow) {
   };
 }
 
-export function getCurrentVideo(period: Period, date: Date = new Date(), refreshIntervalSeconds = 60) {
+// Which candidate (by array index, once sorted) is currently playing for each
+// period. Advances only when the client reports the playing video reached its
+// natural end, so multi-video rotation plays each one to completion rather
+// than cutting it off on a fixed timer.
+const currentIndexByPeriod = new Map<Period, number>();
+
+export function getCurrentVideo(period: Period) {
   const candidates = selectEnabledForPeriod.all(period) as VideoRow[];
   if (candidates.length === 0) {
-    return { video: null };
+    return { video: null, hasMultipleVideos: false };
   }
 
-  const interval = Math.max(1, refreshIntervalSeconds);
-  const step = Math.floor(date.getTime() / 1000 / interval);
-  const index = step % candidates.length;
+  const index = (currentIndexByPeriod.get(period) ?? 0) % candidates.length;
+  return { video: toPublicVideo(candidates[index]), hasMultipleVideos: candidates.length > 1 };
+}
 
-  return { video: toPublicVideo(candidates[index]) };
+export function advanceVideo(period: Period) {
+  const candidates = selectEnabledForPeriod.all(period) as VideoRow[];
+  if (candidates.length === 0) {
+    currentIndexByPeriod.set(period, 0);
+    return { video: null, hasMultipleVideos: false };
+  }
+
+  const nextIndex = ((currentIndexByPeriod.get(period) ?? 0) + 1) % candidates.length;
+  currentIndexByPeriod.set(period, nextIndex);
+  return { video: toPublicVideo(candidates[nextIndex]), hasMultipleVideos: candidates.length > 1 };
 }

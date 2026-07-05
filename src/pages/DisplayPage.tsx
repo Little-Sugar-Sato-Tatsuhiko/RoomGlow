@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import BackgroundVideo from "../components/BackgroundVideo.tsx";
 import OverlayLayer from "../components/OverlayLayer.tsx";
 import type {
+  AdvanceResponse,
   Period,
   RadarData,
   RadarResponse,
@@ -40,6 +41,7 @@ export default function DisplayPage() {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [weather, setWeather] = useState<WeatherData | undefined>(undefined);
   const [radar, setRadar] = useState<RadarData | undefined>(undefined);
+  const [hasMultipleVideos, setHasMultipleVideos] = useState(false);
   const timeoutRef = useRef<number>();
   const intervalSecondsRef = useRef(DEFAULT_SETTINGS.refreshIntervalSeconds);
   const cursorIdleTimeoutRef = useRef<number>();
@@ -60,6 +62,7 @@ export default function DisplayPage() {
         intervalSecondsRef.current = settingsData.refreshIntervalSeconds || 60;
         setSettings(settingsData);
         setPeriod(statusData.period);
+        setHasMultipleVideos(statusData.hasMultipleVideos);
         setDisplayedVideo((prev) =>
           settingsData.autoMode ? statusData.currentVideo : prev ?? statusData.currentVideo
         );
@@ -140,9 +143,20 @@ export default function DisplayPage() {
     };
   }, []);
 
+  async function handleVideoEnded() {
+    try {
+      const res = await fetch("/api/videos/advance", { method: "POST" });
+      const data: AdvanceResponse = await res.json();
+      setHasMultipleVideos(data.hasMultipleVideos);
+      setDisplayedVideo(data.video);
+    } catch (error) {
+      console.error("[Display] Failed to advance video", error);
+    }
+  }
+
   return (
     <div className={`display-page ${cursorVisible ? "" : "cursor-hidden"}`}>
-      <BackgroundVideo video={displayedVideo} />
+      <BackgroundVideo video={displayedVideo} loop={!hasMultipleVideos} onEnded={handleVideoEnded} />
       {settings.overlayEnabled && (
         <OverlayLayer
           clockEnabled={settings.clockEnabled}

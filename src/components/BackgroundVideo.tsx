@@ -7,6 +7,8 @@ const SAVE_POSITION_INTERVAL_MS = 5000;
 
 interface Props {
   video: Video | null;
+  loop: boolean;
+  onEnded: () => void;
 }
 
 interface Slot {
@@ -23,10 +25,12 @@ interface LocalVideoLayerProps {
   className: string;
   path: string;
   storageKey: string;
+  loop: boolean;
   onError: () => void;
+  onEnded: () => void;
 }
 
-function LocalVideoLayer({ className, path, storageKey, onError }: LocalVideoLayerProps) {
+function LocalVideoLayer({ className, path, storageKey, loop, onError, onEnded }: LocalVideoLayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -58,15 +62,16 @@ function LocalVideoLayer({ className, path, storageKey, onError }: LocalVideoLay
       className={className}
       src={path}
       autoPlay
-      loop
+      loop={loop}
       muted
       playsInline
       onError={onError}
+      onEnded={onEnded}
     />
   );
 }
 
-export default function BackgroundVideo({ video }: Props) {
+export default function BackgroundVideo({ video, loop, onEnded }: Props) {
   const [slots, setSlots] = useState<[Slot, Slot]>([
     { video: null, visible: true },
     { video: null, visible: false },
@@ -109,10 +114,19 @@ export default function BackgroundVideo({ video }: Props) {
           if (index === activeIndexRef.current) setHasError(true);
         };
 
+        const handleEnded = () => {
+          if (index === activeIndexRef.current) onEnded();
+        };
+
         if (slot.video.source === "youtube") {
           return (
             <div key={key} className={layerClassName}>
-              <YoutubeBackground videoId={slot.video.youtubeId} onError={handleError} />
+              <YoutubeBackground
+                videoId={slot.video.youtubeId}
+                loop={loop}
+                onError={handleError}
+                onEnded={handleEnded}
+              />
             </div>
           );
         }
@@ -123,7 +137,9 @@ export default function BackgroundVideo({ video }: Props) {
             className={layerClassName}
             path={slot.video.path}
             storageKey={key}
+            loop={loop}
             onError={handleError}
+            onEnded={handleEnded}
           />
         );
       })}

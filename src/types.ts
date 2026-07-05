@@ -71,9 +71,16 @@ export type RadarResponse = ({ enabled: true } & RadarData) | { enabled: false }
 export interface StatusResponse {
   period: Period;
   currentVideo: Video | null;
+  hasMultipleVideos: boolean;
   autoMode: boolean;
   overlayEnabled: boolean;
   clockEnabled: boolean;
+}
+
+export interface AdvanceResponse {
+  period: Period;
+  video: Video | null;
+  hasMultipleVideos: boolean;
 }
 
 export const PERIOD_LABELS: Record<Period, string> = {

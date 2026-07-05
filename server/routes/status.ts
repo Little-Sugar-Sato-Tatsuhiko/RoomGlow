@@ -12,13 +12,13 @@ function resolvePeriod(now: Date, settings: Record<string, boolean | number | st
 
 statusRouter.get("/status", (_req, res) => {
   const settings = getSettings();
-  const now = new Date();
-  const period = resolvePeriod(now, settings);
-  const { video } = getCurrentVideo(period, now, Number(settings.refreshIntervalSeconds));
+  const period = resolvePeriod(new Date(), settings);
+  const { video, hasMultipleVideos } = getCurrentVideo(period);
 
   res.json({
     period,
     currentVideo: video,
+    hasMultipleVideos,
     autoMode: settings.autoMode,
     overlayEnabled: settings.overlayEnabled,
     clockEnabled: settings.clockEnabled,
@@ -27,8 +27,9 @@ statusRouter.get("/status", (_req, res) => {
 
 statusRouter.get("/current-video", (_req, res) => {
   const settings = getSettings();
-  const now = new Date();
-  const period = resolvePeriod(now, settings);
-  const { video } = getCurrentVideo(period, now, Number(settings.refreshIntervalSeconds));
-  res.json({ period, video });
+  const period = resolvePeriod(new Date(), settings);
+  const { video, hasMultipleVideos } = getCurrentVideo(period);
+  res.json({ period, video, hasMultipleVideos });
 });
+
+export { resolvePeriod };

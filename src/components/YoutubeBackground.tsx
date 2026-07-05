@@ -51,14 +51,18 @@ function loadYoutubeApi(): Promise<void> {
 
 interface Props {
   videoId: string;
+  loop: boolean;
   onError: () => void;
+  onEnded: () => void;
 }
 
-export default function YoutubeBackground({ videoId, onError }: Props) {
+export default function YoutubeBackground({ videoId, loop, onError, onEnded }: Props) {
   const containerId = `yt-player-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const playerRef = useRef<YoutubePlayer | null>(null);
   const onErrorRef = useRef(onError);
   onErrorRef.current = onError;
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
 
   useEffect(() => {
     let cancelled = false;
@@ -71,8 +75,6 @@ export default function YoutubeBackground({ videoId, onError }: Props) {
           autoplay: 1,
           mute: 1,
           controls: 0,
-          loop: 1,
-          playlist: videoId,
           modestbranding: 1,
           rel: 0,
           iv_load_policy: 3,
@@ -80,6 +82,7 @@ export default function YoutubeBackground({ videoId, onError }: Props) {
           playsinline: 1,
           disablekb: 1,
           fs: 0,
+          ...(loop ? { loop: 1, playlist: videoId } : {}),
         },
         events: {
           onReady: (event: { target: YoutubePlayer }) => {
@@ -93,6 +96,7 @@ export default function YoutubeBackground({ videoId, onError }: Props) {
           },
           onStateChange: (event: { data: number; target: YoutubePlayer }) => {
             if (event.data === 1 /* playing */) requestHighestQuality(event.target);
+            if (event.data === 0 /* ended */) onEndedRef.current();
           },
           onError: () => onErrorRef.current(),
         },
