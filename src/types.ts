@@ -25,6 +25,7 @@ export type VideoListItem = Video & {
 };
 
 export type PeriodMode = "auto" | "manual";
+export type LocationSource = "auto" | "manual";
 
 export interface Settings {
   autoMode: boolean;
@@ -34,6 +35,7 @@ export interface Settings {
   weatherEnabled: boolean;
   weatherLatitude: number;
   weatherLongitude: number;
+  locationSource: LocationSource;
   radarEnabled: boolean;
   periodMode: PeriodMode;
   morningStartTime: string;
@@ -81,6 +83,12 @@ export interface AdvanceResponse {
   period: Period;
   video: Video | null;
   hasMultipleVideos: boolean;
+}
+
+export interface LocationDetectResponse {
+  latitude: number;
+  longitude: number;
+  city: string | null;
 }
 
 export const PERIOD_LABELS: Record<Period, string> = {

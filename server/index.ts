@@ -9,13 +9,17 @@ import express, { type ErrorRequestHandler } from "express";
 // (weather, radar, YouTube oEmbed) even though a plain single-family connection
 // succeeds instantly. Disable it so fetch falls back to normal connection behavior.
 net.setDefaultAutoSelectFamily(false);
-import { ROOT_DIR, VIDEOS_DIR } from "./db.ts";
+import { DEFAULT_SETTINGS, ROOT_DIR, VIDEOS_DIR } from "./db.ts";
 import { scanVideos } from "./services/videoScanner.ts";
 import { videosRouter } from "./routes/videos.ts";
 import { settingsRouter } from "./routes/settings.ts";
 import { statusRouter } from "./routes/status.ts";
 import { weatherRouter } from "./routes/weather.ts";
 import { radarRouter } from "./routes/radar.ts";
+import { locationRouter } from "./routes/location.ts";
+import { detectLocation } from "./services/locationService.ts";
+import { getSettings } from "./routes/settings.ts";
+import { db } from "./db.ts";
 
 const isProduction = process.env.NODE_ENV === "production";
 const port = Number(process.env.PORT) || 3000;
@@ -23,6 +27,32 @@ const port = Number(process.env.PORT) || 3000;
 console.log(`[App] Starting ai-window-web in ${isProduction ? "production" : "development"} mode`);
 
 scanVideos();
+
+// Best-effort: populate the location from the server's public IP, but only on
+// a true first run (coordinates still at the built-in default). Once detected
+// once, or set by hand, later restarts (including dev's watch-and-restart)
+// won't keep re-querying the IP geolocation service.
+const startupSettings = getSettings();
+const isUnconfiguredLocation =
+  startupSettings.locationSource !== "manual" &&
+  String(startupSettings.weatherLatitude) === DEFAULT_SETTINGS.weatherLatitude &&
+  String(startupSettings.weatherLongitude) === DEFAULT_SETTINGS.weatherLongitude;
+
+if (isUnconfiguredLocation) {
+  const upsertSetting = db.prepare(
+    "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  );
+  detectLocation()
+    .then((location) => {
+      if (!location) return;
+      upsertSetting.run("weatherLatitude", String(location.latitude));
+      upsertSetting.run("weatherLongitude", String(location.longitude));
+      console.log(
+        `[Location] Auto-detected location on first run: ${location.city ?? "unknown city"} (${location.latitude}, ${location.longitude})`
+      );
+    })
+    .catch((error) => console.error("[Location] Startup auto-detect failed:", error));
+}
 
 const app = express();
 app.use(express.json());
@@ -33,6 +63,7 @@ app.use("/api/videos", videosRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/weather", weatherRouter);
 app.use("/api/radar", radarRouter);
+app.use("/api/location", locationRouter);
 app.use("/api", statusRouter);
 
 app.get("/", (_req, res) => res.redirect("/display"));

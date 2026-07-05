@@ -1,13 +1,14 @@
 import { Router } from "express";
-import { db, PERIOD_MODES } from "../db.ts";
+import { db, LOCATION_SOURCES, PERIOD_MODES } from "../db.ts";
 
 export const settingsRouter = Router();
 
 const BOOLEAN_KEYS = new Set(["autoMode", "overlayEnabled", "clockEnabled", "weatherEnabled", "radarEnabled"]);
 const NUMBER_KEYS = new Set(["refreshIntervalSeconds", "weatherLatitude", "weatherLongitude"]);
 const TIME_KEYS = new Set(["morningStartTime", "daytimeStartTime", "eveningStartTime", "nightStartTime"]);
-const STRING_KEYS = new Set(["periodMode", ...TIME_KEYS]);
+const STRING_KEYS = new Set(["periodMode", "locationSource", ...TIME_KEYS]);
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const LOCATION_KEYS = new Set(["weatherLatitude", "weatherLongitude"]);
 
 const selectAll = db.prepare("SELECT key, value FROM settings");
 const upsert = db.prepare(
@@ -44,17 +45,29 @@ settingsRouter.patch("/", (req, res) => {
     if (key === "periodMode" && !PERIOD_MODES.includes(value as (typeof PERIOD_MODES)[number])) {
       return res.status(400).json({ error: `'periodMode' must be one of: ${PERIOD_MODES.join(", ")}` });
     }
+    if (key === "locationSource" && !LOCATION_SOURCES.includes(value as (typeof LOCATION_SOURCES)[number])) {
+      return res.status(400).json({ error: `'locationSource' must be one of: ${LOCATION_SOURCES.join(", ")}` });
+    }
     if (TIME_KEYS.has(key) && !TIME_PATTERN.test(String(value))) {
       return res.status(400).json({ error: `'${key}' must be in HH:MM format` });
     }
   }
 
-  const applyUpdate = db.transaction((entries: [string, unknown][]) => {
-    for (const [key, value] of entries) {
+  // Editing the coordinates by hand means the auto-detected location should no
+  // longer be silently overwritten on the next startup, unless this same
+  // request already says otherwise.
+  const entries = Object.entries(updates);
+  const editsLocationDirectly = entries.some(([key]) => LOCATION_KEYS.has(key));
+  if (editsLocationDirectly && !("locationSource" in updates)) {
+    entries.push(["locationSource", "manual"]);
+  }
+
+  const applyUpdate = db.transaction((items: [string, unknown][]) => {
+    for (const [key, value] of items) {
       upsert.run(key, String(value));
     }
   });
-  applyUpdate(Object.entries(updates));
+  applyUpdate(entries);
 
   console.log(`[Settings] Updated: ${Object.keys(updates).join(", ")}`);
   res.json(getSettings());

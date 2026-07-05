@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: Settings = {
   weatherEnabled: true,
   weatherLatitude: 35.6762,
   weatherLongitude: 139.6503,
+  locationSource: "auto",
   radarEnabled: true,
   periodMode: "auto",
   morningStartTime: "05:00",

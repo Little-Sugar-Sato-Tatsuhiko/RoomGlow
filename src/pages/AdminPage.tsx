@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import type { Settings, StatusResponse, VideoListItem, Period } from "../types.ts";
+import type { LocationDetectResponse, Settings, StatusResponse, VideoListItem, Period } from "../types.ts";
 import { PERIOD_LABELS } from "../types.ts";
 
 const PERIOD_ORDER: Period[] = ["morning", "daytime", "evening", "night"];
@@ -15,6 +15,8 @@ export default function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [detectMessage, setDetectMessage] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     const [videosRes, settingsRes, statusRes] = await Promise.all([
@@ -65,6 +67,35 @@ export default function AdminPage() {
       body: JSON.stringify({ [key]: value }),
     });
     setSettings(await res.json());
+  }
+
+  async function handleDetectLocation() {
+    setDetecting(true);
+    setDetectMessage(null);
+    try {
+      const res = await fetch("/api/location/detect", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setDetectMessage(data.error ?? "現在地の検出に失敗しました");
+        return;
+      }
+      const location = data as LocationDetectResponse;
+      setSettings((prev) =>
+        prev
+          ? {
+              ...prev,
+              weatherLatitude: location.latitude,
+              weatherLongitude: location.longitude,
+              locationSource: "auto",
+            }
+          : prev
+      );
+      setDetectMessage(`検出結果: ${location.city ?? "不明な都市"}（緯度 ${location.latitude} / 経度 ${location.longitude}）`);
+    } catch {
+      setDetectMessage("現在地の検出に失敗しました");
+    } finally {
+      setDetecting(false);
+    }
   }
 
   async function handleImportFile(e: ChangeEvent<HTMLInputElement>) {
@@ -212,6 +243,15 @@ export default function AdminPage() {
             />
           </label>
         </div>
+        <div className="admin-section-actions" style={{ marginTop: "0.75rem" }}>
+          <button type="button" onClick={handleDetectLocation} disabled={detecting}>
+            {detecting ? "検出中..." : "現在地を自動検出"}
+          </button>
+          <span className="empty-message">
+            {settings.locationSource === "manual" ? "現在は手動設定（緯度・経度を直接編集すると自動検出は行われなくなります）" : "IPアドレスから自動検出した位置情報を使用中"}
+          </span>
+        </div>
+        {detectMessage && <p className="empty-message">{detectMessage}</p>}
       </section>
 
       <section className="admin-section">

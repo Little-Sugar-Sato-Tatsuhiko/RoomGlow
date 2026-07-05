@@ -16,6 +16,9 @@ export type VideoSource = (typeof VIDEO_SOURCES)[number];
 export const PERIOD_MODES = ["auto", "manual"] as const;
 export type PeriodMode = (typeof PERIOD_MODES)[number];
 
+export const LOCATION_SOURCES = ["auto", "manual"] as const;
+export type LocationSource = (typeof LOCATION_SOURCES)[number];
+
 export const DEFAULT_SETTINGS = {
   autoMode: "true",
   overlayEnabled: "true",
@@ -24,6 +27,7 @@ export const DEFAULT_SETTINGS = {
   weatherEnabled: "true",
   weatherLatitude: "35.6762",
   weatherLongitude: "139.6503",
+  locationSource: "auto",
   radarEnabled: "true",
   periodMode: "auto",
   morningStartTime: "05:00",
