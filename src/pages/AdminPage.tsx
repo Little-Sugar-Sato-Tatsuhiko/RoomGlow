@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import type { Settings, StatusResponse, VideoListItem, Period } from "../types.ts";
 import { PERIOD_LABELS } from "../types.ts";
 
@@ -13,6 +13,8 @@ export default function AdminPage() {
   const [youtubeForm, setYoutubeForm] = useState({ url: "", period: "daytime" as Period, title: "" });
   const [youtubeError, setYoutubeError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     const [videosRes, settingsRes, statusRes] = await Promise.all([
@@ -63,6 +65,38 @@ export default function AdminPage() {
       body: JSON.stringify({ [key]: value }),
     });
     setSettings(await res.json());
+  }
+
+  async function handleImportFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setImporting(true);
+    setImportMessage(null);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const res = await fetch("/api/videos/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videos: parsed.videos }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportMessage(data.error ?? "インポートに失敗しました");
+        return;
+      }
+      setVideos(data.videos);
+      setImportMessage(
+        `追加: ${data.imported}件 / 更新: ${data.updated}件` +
+          (data.skipped.length > 0 ? ` / スキップ: ${data.skipped.length}件` : "")
+      );
+    } catch {
+      setImportMessage("ファイルの読み込みに失敗しました（JSON形式を確認してください）");
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function handleAddYoutube(e: FormEvent) {
@@ -272,10 +306,26 @@ export default function AdminPage() {
       <section className="admin-section">
         <div className="admin-section-header">
           <h2>動画一覧</h2>
-          <button onClick={handleScan} disabled={scanning}>
-            {scanning ? "スキャン中..." : "動画フォルダを再スキャン"}
-          </button>
+          <div className="admin-section-actions">
+            <a className="button-link" href="/api/videos/export" download>
+              エクスポート
+            </a>
+            <label className="button-link">
+              {importing ? "インポート中..." : "インポート"}
+              <input
+                type="file"
+                accept="application/json"
+                onChange={handleImportFile}
+                disabled={importing}
+                hidden
+              />
+            </label>
+            <button onClick={handleScan} disabled={scanning}>
+              {scanning ? "スキャン中..." : "動画フォルダを再スキャン"}
+            </button>
+          </div>
         </div>
+        {importMessage && <p className="empty-message">{importMessage}</p>}
 
         {PERIOD_ORDER.map((period) => {
           const periodVideos = videos.filter((v) => v.period === period);

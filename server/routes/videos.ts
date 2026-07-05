@@ -61,19 +61,120 @@ const selectAll = db.prepare(
   "SELECT * FROM videos ORDER BY period ASC, name ASC"
 );
 const selectById = db.prepare("SELECT * FROM videos WHERE id = ?");
-const selectByRelativePath = db.prepare("SELECT id FROM videos WHERE relative_path = ?");
+const selectByRelativePath = db.prepare("SELECT * FROM videos WHERE relative_path = ?");
 const updateEnabled = db.prepare(
   "UPDATE videos SET enabled = ?, updated_at = ? WHERE id = ?"
+);
+const updateImported = db.prepare(
+  "UPDATE videos SET name = ?, enabled = ?, updated_at = ? WHERE id = ?"
 );
 const deleteById = db.prepare("DELETE FROM videos WHERE id = ?");
 const insertYoutubeVideo = db.prepare(`
   INSERT INTO videos (name, relative_path, period, source, youtube_id, enabled, created_at, updated_at)
   VALUES (@name, @relative_path, @period, 'youtube', @youtube_id, 1, @now, @now)
 `);
+const insertImportedVideo = db.prepare(`
+  INSERT INTO videos (name, relative_path, period, source, youtube_id, enabled, created_at, updated_at)
+  VALUES (@name, @relative_path, @period, @source, @youtube_id, @enabled, @now, @now)
+`);
+
+interface ExportedVideo {
+  name: string;
+  period: string;
+  enabled: boolean;
+  source: "local" | "youtube";
+  relativePath?: string;
+  youtubeId?: string;
+}
+
+function toExportItem(video: VideoRow): ExportedVideo {
+  const base = {
+    name: video.name,
+    period: video.period,
+    enabled: Boolean(video.enabled),
+  };
+
+  if (video.source === "youtube") {
+    return { ...base, source: "youtube", youtubeId: video.youtube_id as string };
+  }
+  return { ...base, source: "local", relativePath: video.relative_path };
+}
 
 videosRouter.get("/", (_req, res) => {
   const videos = (selectAll.all() as VideoRow[]).map(toVideoListItem);
   res.json({ videos });
+});
+
+videosRouter.get("/export", (_req, res) => {
+  const videos = (selectAll.all() as VideoRow[]).map(toExportItem);
+  const exportData = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    videos,
+  };
+
+  const filename = `roomglow-playlist-${new Date().toISOString().slice(0, 10)}.json`;
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.json(exportData);
+});
+
+videosRouter.post("/import", (req, res) => {
+  const entries = req.body?.videos;
+  if (!Array.isArray(entries)) {
+    return res.status(400).json({ error: "'videos' must be an array" });
+  }
+
+  let imported = 0;
+  let updated = 0;
+  const skipped: string[] = [];
+
+  const applyImport = db.transaction((items: unknown[]) => {
+    for (const item of items) {
+      const entry = item as Partial<ExportedVideo>;
+
+      if (!entry || typeof entry.name !== "string" || !PERIODS.includes(entry.period as never)) {
+        skipped.push(entry?.name ?? "(不明)");
+        continue;
+      }
+
+      let relativePath: string | null = null;
+      if (entry.source === "youtube" && typeof entry.youtubeId === "string") {
+        relativePath = `youtube/${entry.period}/${entry.youtubeId}`;
+      } else if (entry.source === "local" && typeof entry.relativePath === "string") {
+        relativePath = entry.relativePath;
+      }
+
+      if (!relativePath) {
+        skipped.push(entry.name);
+        continue;
+      }
+
+      const now = new Date().toISOString();
+      const existing = selectByRelativePath.get(relativePath) as VideoRow | undefined;
+      const enabled = entry.enabled !== false;
+
+      if (existing) {
+        updateImported.run(entry.name, enabled ? 1 : 0, now, existing.id);
+        updated += 1;
+      } else {
+        insertImportedVideo.run({
+          name: entry.name,
+          relative_path: relativePath,
+          period: entry.period,
+          source: entry.source,
+          youtube_id: entry.source === "youtube" ? entry.youtubeId : null,
+          enabled: enabled ? 1 : 0,
+          now,
+        });
+        imported += 1;
+      }
+    }
+  });
+  applyImport(entries);
+
+  console.log(`[Videos] Import: ${imported} added, ${updated} updated, ${skipped.length} skipped`);
+  const videos = (selectAll.all() as VideoRow[]).map(toVideoListItem);
+  res.json({ imported, updated, skipped, videos });
 });
 
 videosRouter.post("/scan", (_req, res) => {
