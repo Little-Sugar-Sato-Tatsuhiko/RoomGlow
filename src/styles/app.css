@@ -1,0 +1,537 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: #000;
+  font-family: "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+/* ---------- Display page ---------- */
+
+.display-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.display-page.cursor-hidden {
+  cursor: none;
+}
+
+.admin-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.admin-link:hover,
+.admin-link:focus-visible {
+  opacity: 1;
+}
+
+.background-video {
+  position: absolute;
+  inset: 0;
+}
+
+.background-video--fallback {
+  background: #000;
+}
+
+.background-video__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+
+.background-video__layer.is-visible {
+  opacity: 1;
+}
+
+.youtube-background {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.youtube-background iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 56.25vw; /* 16:9 */
+  min-height: 100vh;
+  min-width: 177.78vh; /* 16:9 */
+  transform: translate(-50%, -50%);
+  border: 0;
+}
+
+.overlay-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: 3vh 3vw;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  transition: transform 2s ease-in-out;
+}
+
+.overlay-panel {
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  text-align: right;
+  backdrop-filter: blur(2px);
+}
+
+.clock-widget__time {
+  font-size: 3.5vw;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.clock-widget__date {
+  font-size: 1.3vw;
+  opacity: 0.85;
+  margin-top: 0.25rem;
+}
+
+.overlay-period,
+.overlay-no-video {
+  font-size: 1.1vw;
+  opacity: 0.85;
+  margin: 0.4rem 0 0;
+}
+
+.overlay-no-video {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.calendar-widget {
+  margin-top: 0.4rem;
+  font-size: 1.1vw;
+  opacity: 0.85;
+}
+
+.weather-widget {
+  margin-top: 0.6rem;
+  opacity: 0.9;
+}
+
+.weather-widget__current {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  font-size: 1.3vw;
+}
+
+.weather-widget__icon {
+  font-size: 1.6vw;
+}
+
+.weather-widget__temperature {
+  font-weight: 600;
+}
+
+.weather-widget__condition {
+  opacity: 0.85;
+}
+
+.weather-widget__hourly {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8vw;
+  margin-top: 0.4rem;
+}
+
+.weather-widget__hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  font-size: 0.9vw;
+  opacity: 0.85;
+}
+
+.weather-widget__hour-icon {
+  font-size: 1.2vw;
+}
+
+.rain-radar {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.rain-radar__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+  grid-template-rows: repeat(3, 42px);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.rain-radar__cell {
+  position: relative;
+  width: 42px;
+  height: 42px;
+}
+
+.rain-radar__base,
+.rain-radar__precip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rain-radar__precip {
+  opacity: 0.85;
+}
+
+.rain-radar__marker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -50%);
+}
+
+.rain-radar__attribution {
+  margin: 0.2rem 0 0;
+  font-size: 0.6vw;
+  opacity: 0.6;
+}
+
+/* ---------- Admin modal ---------- */
+
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.admin-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.admin-modal-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---------- Admin page ---------- */
+
+.admin-page {
+  min-height: 100%;
+  background: #f4f5f7;
+  color: #1a1a1a;
+  padding: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.admin-header h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.display-link {
+  color: #2563eb;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.display-link:hover {
+  text-decoration: underline;
+}
+
+.admin-status {
+  color: #444;
+  margin: 0 0 1.5rem;
+}
+
+.admin-section {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.admin-section h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  background: #f4f5f7;
+  border-radius: 8px;
+}
+
+.setting-row span {
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-row select,
+.setting-row input[type="time"] {
+  flex-shrink: 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.setting-row input[type="number"] {
+  width: 6rem;
+  flex-shrink: 0;
+}
+
+.video-group {
+  margin-top: 1rem;
+}
+
+.video-group h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-message {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.video-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.video-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.8rem;
+  background: #f4f5f7;
+  border-radius: 8px;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.video-name {
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.video-thumbnail {
+  width: 64px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.video-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.video-badge--local {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.video-badge--youtube {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.video-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.video-delete {
+  background: #ef4444;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.youtube-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.youtube-form input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.youtube-form select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.form-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+button {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .admin-page {
+    padding: 1rem;
+  }
+
+  .overlay-panel {
+    padding: 1rem 1.25rem;
+  }
+
+  .clock-widget__time {
+    font-size: 6vw;
+  }
+
+  .clock-widget__date,
+  .overlay-period,
+  .overlay-no-video,
+  .calendar-widget {
+    font-size: 2.6vw;
+  }
+
+  .weather-widget__current {
+    font-size: 2.6vw;
+  }
+
+  .weather-widget__icon {
+    font-size: 3.2vw;
+  }
+
+  .weather-widget__hour {
+    font-size: 2vw;
+  }
+
+  .weather-widget__hour-icon {
+    font-size: 2.6vw;
+  }
+}

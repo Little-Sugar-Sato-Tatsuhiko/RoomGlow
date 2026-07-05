@@ -1,0 +1,13 @@
+node_modules/
+dist/
+release/
+electron/server-bundle.cjs
+data/*.sqlite
+data/*.sqlite-*
+!data/.gitkeep
+videos/**/*.mp4
+videos/**/*.webm
+videos/**/*.mov
+videos/**/*.mkv
+.DS_Store
+*.log
