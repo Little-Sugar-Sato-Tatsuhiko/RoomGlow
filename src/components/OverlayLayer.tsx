@@ -4,22 +4,23 @@ import WeatherWidget from "./WeatherWidget.tsx";
 import CalendarWidget from "./CalendarWidget.tsx";
 import MonthCalendar from "./MonthCalendar.tsx";
 import RainRadar from "./RainRadar.tsx";
-import { PERIOD_LABELS } from "../types.ts";
-import type { Period, RadarData, WeatherData } from "../types.ts";
+import SunTimes from "./SunTimes.tsx";
+import type { RadarData, WeatherData } from "../types.ts";
 
 interface Props {
   clockEnabled: boolean;
-  period: Period | null;
   noVideo: boolean;
   weather?: WeatherData;
   radar?: RadarData;
+  sunrise?: string | null;
+  sunset?: string | null;
 }
 
 // Small periodic position shift to reduce OLED/panel burn-in over long uptimes.
 const SHIFT_STEPS_PX = [0, 12, 24, 36];
 const SHIFT_INTERVAL_MS = 10 * 60 * 1000;
 
-export default function OverlayLayer({ clockEnabled, period, noVideo, weather, radar }: Props) {
+export default function OverlayLayer({ clockEnabled, noVideo, weather, radar, sunrise, sunset }: Props) {
   const [shift, setShift] = useState(0);
 
   useEffect(() => {
@@ -42,9 +43,9 @@ export default function OverlayLayer({ clockEnabled, period, noVideo, weather, r
       </div>
       <div className="overlay-panel">
         {clockEnabled && <ClockWidget />}
-        {period && <p className="overlay-period">{PERIOD_LABELS[period]}の時間帯</p>}
         {noVideo && <p className="overlay-no-video">No video available</p>}
         <WeatherWidget data={weather} />
+        <SunTimes sunrise={sunrise} sunset={sunset} />
         <CalendarWidget />
       </div>
     </div>

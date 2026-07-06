@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getCurrentVideo } from "../services/playlistService.ts";
-import { getCurrentPeriod } from "../services/periodService.ts";
+import { getCurrentPeriod, getSunTimes } from "../services/periodService.ts";
 import type { PeriodSettings } from "../services/periodService.ts";
 import { getSettings } from "./settings.ts";
 
@@ -14,6 +14,7 @@ statusRouter.get("/status", (_req, res) => {
   const settings = getSettings();
   const period = resolvePeriod(new Date(), settings);
   const { video, hasMultipleVideos } = getCurrentVideo(period);
+  const sunTimes = getSunTimes(new Date(), Number(settings.weatherLatitude), Number(settings.weatherLongitude));
 
   res.json({
     period,
@@ -22,6 +23,8 @@ statusRouter.get("/status", (_req, res) => {
     autoMode: settings.autoMode,
     overlayEnabled: settings.overlayEnabled,
     clockEnabled: settings.clockEnabled,
+    sunrise: sunTimes?.sunrise ?? null,
+    sunset: sunTimes?.sunset ?? null,
   });
 });
 

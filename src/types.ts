@@ -77,6 +77,8 @@ export interface StatusResponse {
   autoMode: boolean;
   overlayEnabled: boolean;
   clockEnabled: boolean;
+  sunrise: string | null;
+  sunset: string | null;
 }
 
 export interface AdvanceResponse {

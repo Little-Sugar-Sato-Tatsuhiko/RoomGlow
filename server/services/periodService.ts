@@ -49,18 +49,38 @@ function resolvePeriod(nowMinutes: number, boundaries: Record<Period, number>): 
   return result;
 }
 
-function computeAutoBoundaries(date: Date, latitude: number, longitude: number): Record<Period, number> {
+function getValidSunTimes(date: Date, latitude: number, longitude: number): { sunrise: Date; sunset: Date } | null {
   const { sunrise, sunset } = getTimes(date, latitude, longitude);
   if (!sunrise || !sunset || Number.isNaN(sunrise.getTime()) || Number.isNaN(sunset.getTime())) {
-    return DEFAULT_BOUNDARIES;
+    return null;
   }
+  return { sunrise, sunset };
+}
+
+function computeAutoBoundaries(date: Date, latitude: number, longitude: number): Record<Period, number> {
+  const sunTimes = getValidSunTimes(date, latitude, longitude);
+  if (!sunTimes) return DEFAULT_BOUNDARIES;
 
   return {
-    morning: toMinutesOfDay(sunrise),
-    daytime: toMinutesOfDay(sunrise) + MORNING_DURATION_MINUTES,
-    evening: toMinutesOfDay(sunset) - EVENING_LEAD_MINUTES,
-    night: toMinutesOfDay(sunset) + EVENING_TAIL_MINUTES,
+    morning: toMinutesOfDay(sunTimes.sunrise),
+    daytime: toMinutesOfDay(sunTimes.sunrise) + MORNING_DURATION_MINUTES,
+    evening: toMinutesOfDay(sunTimes.sunset) - EVENING_LEAD_MINUTES,
+    night: toMinutesOfDay(sunTimes.sunset) + EVENING_TAIL_MINUTES,
   };
+}
+
+function formatTime(date: Date): string {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+export function getSunTimes(
+  date: Date,
+  latitude: number,
+  longitude: number
+): { sunrise: string; sunset: string } | null {
+  const sunTimes = getValidSunTimes(date, latitude, longitude);
+  if (!sunTimes) return null;
+  return { sunrise: formatTime(sunTimes.sunrise), sunset: formatTime(sunTimes.sunset) };
 }
 
 function computeManualBoundaries(settings: PeriodSettings): Record<Period, number> {

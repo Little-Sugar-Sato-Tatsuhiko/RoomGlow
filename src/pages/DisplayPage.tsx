@@ -4,7 +4,6 @@ import BackgroundVideo from "../components/BackgroundVideo.tsx";
 import OverlayLayer from "../components/OverlayLayer.tsx";
 import type {
   AdvanceResponse,
-  Period,
   RadarData,
   RadarResponse,
   Settings,
@@ -36,12 +35,15 @@ const WEATHER_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 const RADAR_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function DisplayPage() {
-  const [period, setPeriod] = useState<Period | null>(null);
   const [displayedVideo, setDisplayedVideo] = useState<Video | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [weather, setWeather] = useState<WeatherData | undefined>(undefined);
   const [radar, setRadar] = useState<RadarData | undefined>(undefined);
+  const [sunTimes, setSunTimes] = useState<{ sunrise: string | null; sunset: string | null }>({
+    sunrise: null,
+    sunset: null,
+  });
   const [hasMultipleVideos, setHasMultipleVideos] = useState(false);
   const timeoutRef = useRef<number>();
   const intervalSecondsRef = useRef(DEFAULT_SETTINGS.refreshIntervalSeconds);
@@ -62,7 +64,7 @@ export default function DisplayPage() {
 
         intervalSecondsRef.current = settingsData.refreshIntervalSeconds || 60;
         setSettings(settingsData);
-        setPeriod(statusData.period);
+        setSunTimes({ sunrise: statusData.sunrise, sunset: statusData.sunset });
         setHasMultipleVideos(statusData.hasMultipleVideos);
         setDisplayedVideo((prev) =>
           settingsData.autoMode ? statusData.currentVideo : prev ?? statusData.currentVideo
@@ -161,10 +163,11 @@ export default function DisplayPage() {
       {settings.overlayEnabled && (
         <OverlayLayer
           clockEnabled={settings.clockEnabled}
-          period={period}
           noVideo={displayedVideo === null}
           weather={weather}
           radar={radar}
+          sunrise={sunTimes.sunrise}
+          sunset={sunTimes.sunset}
         />
       )}
       <Link className="admin-link" to="/admin">

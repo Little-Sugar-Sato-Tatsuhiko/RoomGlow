@@ -120,16 +120,20 @@ body,
   margin-top: 0.25rem;
 }
 
-.overlay-period,
 .overlay-no-video {
   font-size: 1.1vw;
-  opacity: 0.85;
+  opacity: 1;
+  font-weight: 600;
   margin: 0.4rem 0 0;
 }
 
-.overlay-no-video {
-  opacity: 1;
-  font-weight: 600;
+.sun-times {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8vw;
+  margin-top: 0.4rem;
+  font-size: 1.1vw;
+  opacity: 0.85;
 }
 
 .calendar-widget {
