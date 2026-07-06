@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ClockWidget from "./ClockWidget.tsx";
 import WeatherWidget from "./WeatherWidget.tsx";
 import CalendarWidget from "./CalendarWidget.tsx";
+import MonthCalendar from "./MonthCalendar.tsx";
 import RainRadar from "./RainRadar.tsx";
 import { PERIOD_LABELS } from "../types.ts";
 import type { Period, RadarData, WeatherData } from "../types.ts";
@@ -33,12 +34,17 @@ export default function OverlayLayer({ clockEnabled, period, noVideo, weather, r
 
   return (
     <div className="overlay-layer" style={{ transform: `translate(-${shift}px, -${shift}px)` }}>
+      <div className="rain-radar-corner">
+        <RainRadar data={radar} />
+      </div>
+      <div className="month-calendar-corner">
+        <MonthCalendar />
+      </div>
       <div className="overlay-panel">
         {clockEnabled && <ClockWidget />}
         {period && <p className="overlay-period">{PERIOD_LABELS[period]}の時間帯</p>}
         {noVideo && <p className="overlay-no-video">No video available</p>}
         <WeatherWidget data={weather} />
-        <RainRadar data={radar} />
         <CalendarWidget />
       </div>
     </div>

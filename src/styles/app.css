@@ -183,8 +183,63 @@ body,
   font-size: 1.2vw;
 }
 
+.rain-radar-corner {
+  position: absolute;
+  top: 3vh;
+  right: 3vw;
+  pointer-events: none;
+}
+
+.month-calendar-corner {
+  position: absolute;
+  top: 3vh;
+  left: 3vw;
+  pointer-events: none;
+}
+
+.month-calendar {
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+  min-width: 14vw;
+}
+
+.month-calendar__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.1vw;
+  font-weight: 600;
+  text-align: center;
+}
+
+.month-calendar__weekdays,
+.month-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.month-calendar__weekday {
+  font-size: 0.8vw;
+  opacity: 0.7;
+  text-align: center;
+  padding-bottom: 0.3rem;
+}
+
+.month-calendar__cell {
+  font-size: 0.9vw;
+  text-align: center;
+  padding: 0.25rem 0;
+}
+
+.month-calendar__cell--today {
+  background: #fff;
+  color: #111;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
 .rain-radar {
-  margin-top: 0.6rem;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -192,17 +247,17 @@ body,
 
 .rain-radar__grid {
   display: grid;
-  grid-template-columns: repeat(3, 42px);
-  grid-template-rows: repeat(3, 42px);
-  border-radius: 6px;
+  grid-template-columns: repeat(3, 90px);
+  grid-template-rows: repeat(3, 90px);
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .rain-radar__cell {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 90px;
+  height: 90px;
 }
 
 .rain-radar__base,
@@ -221,8 +276,8 @@ body,
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.6);
@@ -230,9 +285,9 @@ body,
 }
 
 .rain-radar__attribution {
-  margin: 0.2rem 0 0;
-  font-size: 0.6vw;
-  opacity: 0.6;
+  margin: 0.3rem 0 0;
+  font-size: 0.8vw;
+  opacity: 0.7;
 }
 
 /* ---------- Admin modal ---------- */
