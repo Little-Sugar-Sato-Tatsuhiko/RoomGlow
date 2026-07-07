@@ -3,7 +3,14 @@ import { db, LOCATION_SOURCES, PERIOD_MODES } from "../db.ts";
 
 export const settingsRouter = Router();
 
-const BOOLEAN_KEYS = new Set(["autoMode", "overlayEnabled", "clockEnabled", "weatherEnabled", "radarEnabled"]);
+const BOOLEAN_KEYS = new Set([
+  "autoMode",
+  "overlayEnabled",
+  "clockEnabled",
+  "weatherEnabled",
+  "radarEnabled",
+  "radarOnlyWhenRainy",
+]);
 const NUMBER_KEYS = new Set(["refreshIntervalSeconds", "weatherLatitude", "weatherLongitude"]);
 const TIME_KEYS = new Set(["morningStartTime", "daytimeStartTime", "eveningStartTime", "nightStartTime"]);
 const STRING_KEYS = new Set(["periodMode", "locationSource", ...TIME_KEYS]);

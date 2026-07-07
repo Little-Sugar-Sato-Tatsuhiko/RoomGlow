@@ -37,6 +37,7 @@ export interface Settings {
   weatherLongitude: number;
   locationSource: LocationSource;
   radarEnabled: boolean;
+  radarOnlyWhenRainy: boolean;
   periodMode: PeriodMode;
   morningStartTime: string;
   daytimeStartTime: string;
@@ -56,6 +57,7 @@ export interface WeatherData {
   condition: string;
   icon: string;
   hourly: HourlyForecast[];
+  isRainy: boolean;
 }
 
 export type WeatherResponse = ({ enabled: true } & WeatherData) | { enabled: false };

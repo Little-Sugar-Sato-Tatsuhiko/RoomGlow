@@ -13,6 +13,7 @@ export interface WeatherData {
   condition: string;
   icon: string;
   hourly: HourlyForecast[];
+  isRainy: boolean;
 }
 
 interface OpenMeteoResponse {
@@ -63,6 +64,14 @@ function describeWeatherCode(code: number): { condition: string; icon: string } 
   return WEATHER_CODE_LABELS[code] ?? { condition: "不明", icon: "🌡️" };
 }
 
+// Rain/drizzle/thunderstorm codes (excludes fog, snow, and clear/cloudy codes)
+// used to gate the rain radar overlay so it only shows when rain is actually forecast.
+const RAIN_CODES = new Set([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99]);
+
+function isRainCode(code: number): boolean {
+  return RAIN_CODES.has(code);
+}
+
 async function fetchWeather(latitude: number, longitude: number): Promise<WeatherData> {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.searchParams.set("latitude", String(latitude));
@@ -93,11 +102,16 @@ async function fetchWeather(latitude: number, longitude: number): Promise<Weathe
     };
   });
 
+  const isRainy =
+    isRainCode(data.current.weather_code) ||
+    hourlySlice.some((_, index) => isRainCode(data.hourly.weather_code[startIndex + 1 + index]));
+
   return {
     temperatureCelsius: data.current.temperature_2m,
     condition: currentLabel.condition,
     icon: currentLabel.icon,
     hourly,
+    isRainy,
   };
 }
 

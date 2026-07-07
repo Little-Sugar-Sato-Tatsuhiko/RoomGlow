@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS: Settings = {
   weatherLongitude: 139.6503,
   locationSource: "auto",
   radarEnabled: true,
+  radarOnlyWhenRainy: true,
   periodMode: "auto",
   morningStartTime: "05:00",
   daytimeStartTime: "11:00",
@@ -78,9 +79,16 @@ export default function DisplayPage() {
       }
     }
 
+    function handleSettingsChanged() {
+      window.clearTimeout(timeoutRef.current);
+      tick();
+    }
+
     tick();
+    window.addEventListener("roomglow:settings-changed", handleSettingsChanged);
     return () => {
       cancelled = true;
+      window.removeEventListener("roomglow:settings-changed", handleSettingsChanged);
       window.clearTimeout(timeoutRef.current);
     };
   }, []);
@@ -165,7 +173,7 @@ export default function DisplayPage() {
           clockEnabled={settings.clockEnabled}
           noVideo={displayedVideo === null}
           weather={weather}
-          radar={radar}
+          radar={!settings.radarOnlyWhenRainy || weather?.isRainy ? radar : undefined}
           sunrise={sunTimes.sunrise}
           sunset={sunTimes.sunset}
         />

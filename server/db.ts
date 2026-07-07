@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS = {
   weatherLongitude: "139.6503",
   locationSource: "auto",
   radarEnabled: "true",
+  radarOnlyWhenRainy: "true",
   periodMode: "auto",
   morningStartTime: "05:00",
   daytimeStartTime: "11:00",

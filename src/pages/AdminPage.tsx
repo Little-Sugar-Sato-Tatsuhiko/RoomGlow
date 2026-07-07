@@ -67,6 +67,9 @@ export default function AdminPage() {
       body: JSON.stringify({ [key]: value }),
     });
     setSettings(await res.json());
+    // DisplayPage is a sibling component (always-mounted behind this modal) with its
+    // own polling loop; nudge it to refetch now instead of waiting for its next tick.
+    window.dispatchEvent(new Event("roomglow:settings-changed"));
   }
 
   async function handleDetectLocation() {
@@ -240,6 +243,14 @@ export default function AdminPage() {
               type="checkbox"
               checked={settings.radarEnabled}
               onChange={(e) => updateSetting("radarEnabled", e.target.checked)}
+            />
+          </label>
+          <label className="setting-row">
+            <span>雨予報時のみレーダー表示</span>
+            <input
+              type="checkbox"
+              checked={settings.radarOnlyWhenRainy}
+              onChange={(e) => updateSetting("radarOnlyWhenRainy", e.target.checked)}
             />
           </label>
         </div>
