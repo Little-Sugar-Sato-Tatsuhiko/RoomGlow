@@ -172,6 +172,33 @@ start chrome --kiosk http://localhost:3000/display
 
 ---
 
+## 本番運用（Ubuntu Mini PC + Docker）＋ 自動アップデート
+
+Ubuntu Mini PC で Docker Compose を使う場合（`docker compose up -d --build`、`http://localhost:3000/display` をキオスクブラウザで表示）、`main` ブランチへの push を定期的に取り込ませる仕組みを用意している。
+
+- `scripts/auto-pull.sh` — `origin/main` を fetch し、新しいコミットがあれば `git pull --ff-only` する。`server/` `src/` の変更は Docker Compose のホットリロード（上記参照）でそのまま反映されるため、`package.json` / `package-lock.json` が変わった場合のみ `docker compose up -d --build` でコンテナを再構築する。
+- ローカルに未コミットの変更があり fast-forward できない場合は何もせず失敗として終了する(強制的な巻き戻しはしない)。
+
+セットアップ（systemd タイマーで 5 分おきに実行する例）:
+
+```bash
+sudo cp deploy/systemd/roomglow-autopull.service /etc/systemd/system/
+sudo cp deploy/systemd/roomglow-autopull.timer /etc/systemd/system/
+sudo sed -i "s#/home/YOUR_USER/RoomGlow#$(pwd)#g" /etc/systemd/system/roomglow-autopull.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now roomglow-autopull.timer
+```
+
+実行ログの確認:
+
+```bash
+journalctl -u roomglow-autopull.service -f
+```
+
+実行間隔を変えたい場合は `roomglow-autopull.timer` の `OnUnitActiveSec` を編集して `daemon-reload` する。
+
+---
+
 ## デスクトップアプリ（Electron）
 
 ブラウザのキオスクモードの代わりに、Windows/Mac 上でダブルクリックで起動できるデスクトップアプリとしても動かせる。中身は同じ Node/Express サーバーを Electron のメインプロセス内でそのまま起動し、`/display` を表示するウィンドウを開く仕組み。

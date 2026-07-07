@@ -1,0 +1,10 @@
+[Unit]
+Description=RoomGlow auto-pull from git (main)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Edit this path to your actual clone location before installing.
+WorkingDirectory=/home/YOUR_USER/RoomGlow
+ExecStart=/home/YOUR_USER/RoomGlow/scripts/auto-pull.sh
