@@ -2,6 +2,8 @@ import { useEffect, useId, useRef } from "react";
 import { getPlaybackPosition, savePlaybackPosition } from "../lib/playbackPosition.ts";
 
 const SAVE_POSITION_INTERVAL_MS = 5000;
+const ERROR_SKIP_DELAY_MS = 3000;
+const PLAYER_READY_TIMEOUT_MS = 15000;
 
 declare global {
   interface Window {
@@ -66,6 +68,17 @@ export default function YoutubeBackground({ videoId, loop, onError, onEnded }: P
 
   useEffect(() => {
     let cancelled = false;
+    let errorSkipTimeoutId: number | undefined;
+
+    function skipAfterError() {
+      onErrorRef.current();
+      window.clearTimeout(errorSkipTimeoutId);
+      errorSkipTimeoutId = window.setTimeout(() => {
+        if (!cancelled) onEndedRef.current();
+      }, ERROR_SKIP_DELAY_MS);
+    }
+
+    const readyTimeoutId = window.setTimeout(skipAfterError, PLAYER_READY_TIMEOUT_MS);
 
     loadYoutubeApi().then(() => {
       if (cancelled || !window.YT) return;
@@ -86,6 +99,7 @@ export default function YoutubeBackground({ videoId, loop, onError, onEnded }: P
         },
         events: {
           onReady: (event: { target: YoutubePlayer }) => {
+            window.clearTimeout(readyTimeoutId);
             event.target.mute();
             event.target.playVideo();
             event.target.unloadModule?.("cc");
@@ -98,7 +112,7 @@ export default function YoutubeBackground({ videoId, loop, onError, onEnded }: P
             if (event.data === 1 /* playing */) requestHighestQuality(event.target);
             if (event.data === 0 /* ended */) onEndedRef.current();
           },
-          onError: () => onErrorRef.current(),
+          onError: () => skipAfterError(),
         },
       });
     });
@@ -112,6 +126,8 @@ export default function YoutubeBackground({ videoId, loop, onError, onEnded }: P
 
     return () => {
       cancelled = true;
+      window.clearTimeout(readyTimeoutId);
+      window.clearTimeout(errorSkipTimeoutId);
       window.clearInterval(intervalId);
       const currentTime = playerRef.current?.getCurrentTime?.();
       if (typeof currentTime === "number") {
