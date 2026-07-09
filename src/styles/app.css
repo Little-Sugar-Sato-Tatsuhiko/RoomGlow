@@ -127,13 +127,47 @@ body,
   margin: 0.4rem 0 0;
 }
 
-.sun-times {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.8vw;
+.sun-path {
   margin-top: 0.4rem;
+  width: 12vw;
+  min-width: 160px;
+  margin-left: auto;
+  transition: opacity 0.6s ease-in-out;
+}
+
+.sun-path--night {
+  opacity: 0.55;
+}
+
+.sun-path__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.sun-path__arc {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+}
+
+.sun-path__horizon {
+  stroke: rgba(255, 255, 255, 0.25);
+  stroke-width: 1;
+}
+
+.sun-path__sun {
+  fill: #ffd166;
+  filter: drop-shadow(0 0 6px rgba(255, 209, 102, 0.9));
+}
+
+.sun-path__labels {
+  display: flex;
+  justify-content: space-between;
   font-size: 1.1vw;
   opacity: 0.85;
+  margin-top: -0.2rem;
 }
 
 .calendar-widget {
